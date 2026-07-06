@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lectura interactiva | Leccion 7</title>
+  <style>
+    :root{
+      --deep:#183942;--ink:#23343b;--leaf:#4f8f5b;--lime:#dff3a5;--sun:#f6c445;
+      --aqua:#8bd4d9;--clay:#e87845;--rose:#f7c8b7;--cream:#fff8e8;--line:#d7e3d0;
+      --shadow:0 18px 44px rgba(24,57,66,.16);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);letter-spacing:0;background:linear-gradient(180deg,#f6fbf1 0%,#fff8e8 48%,#eef8f6 100%);}
+    button{font:inherit}
+    h1{font-size:clamp(38px,6vw,76px);line-height:1;margin:0 0 16px;color:var(--deep)}
+    h2{font-size:clamp(30px,4.4vw,54px);line-height:1.04;margin:0 0 14px;color:var(--deep)}
+    h3{font-size:clamp(21px,2.5vw,30px);margin:0 0 8px;color:var(--deep)}
+    p{font-size:clamp(18px,2vw,24px);line-height:1.45;margin:0 0 14px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px clamp(14px,3vw,30px);background:rgba(255,255,255,.95);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;backdrop-filter:blur(10px)}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:900;min-width:0;color:var(--deep)}
+    .brand img{width:min(176px,42vw);height:auto}
+    .course{font-weight:900;text-align:right;color:var(--deep)}
+    .deck{max-width:1180px;margin:auto;padding:24px clamp(14px,3vw,32px) 34px}
+    .stage{min-height:690px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+    .slide{display:none;padding:clamp(22px,4vw,46px);min-height:690px}
+    .slide.active{display:block}
+    .grid-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.92fr);gap:34px;align-items:center}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .kicker{display:inline-flex;align-items:center;gap:8px;background:var(--deep);color:white;border-radius:999px;padding:9px 14px;font-weight:900;margin-bottom:16px}
+    .hero-img,.wide-img{width:100%;border-radius:24px;border:2px solid var(--line);box-shadow:0 16px 38px rgba(24,57,66,.14);display:block;object-fit:contain;background:#fff}
+    .hero-img{max-height:500px}
+    .wide-img{max-height:380px;margin:14px 0 18px}
+    .soft-panel{border:2px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#ffffff,#eef8dc);padding:18px;box-shadow:0 18px 34px rgba(24,57,66,.08)}
+    .note,.feedback{border:2px solid #b8d99e;background:linear-gradient(145deg,#f2ffe2,#fff);border-radius:18px;padding:14px 16px;font-size:clamp(17px,1.8vw,22px);font-weight:800;margin-top:16px}
+    .feedback.warn{background:#fff4cf;border-color:#f1ce66}
+    .feedback.good{background:#eaf8dc;border-color:#92ca73}
+    .flip-grid,.card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
+    .flip-card{height:220px;min-height:220px;perspective:1000px;border:0;background:transparent;padding:0;cursor:pointer;text-align:left;display:block}
+    .flip-inner{position:relative;display:block;width:100%;height:100%;transition:transform .55s ease;transform-style:preserve-3d}
+    .flip-card.is-flipped .flip-inner{transform:rotateY(180deg)}
+    .face{position:absolute;inset:0;border:2px solid rgba(24,57,66,.16);border-radius:20px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;backface-visibility:hidden;box-shadow:0 14px 30px rgba(24,57,66,.12),inset 0 0 0 1px rgba(255,255,255,.7);color:var(--deep)}
+    .front{background:linear-gradient(145deg,#fff0b8,#fff)}
+    .flip-card:nth-child(2n) .front{background:linear-gradient(145deg,#dff5d7,#fff)}
+    .flip-card:nth-child(3n) .front{background:linear-gradient(145deg,#d7f2f6,#fff)}
+    .back{background:linear-gradient(145deg,#183942,#2b665f);color:white;transform:rotateY(180deg)}
+    .face strong{display:block;font-size:clamp(18px,1.9vw,25px);margin-bottom:8px}
+    .face span span{display:block;font-size:clamp(14px,1.35vw,18px);line-height:1.3}
+    .tap{align-self:flex-start;background:var(--sun);color:var(--deep);border-radius:999px;padding:8px 14px;font-style:normal;font-weight:900;min-width:86px;text-align:center;white-space:nowrap}
+    .info-card,.choice,.mission-card{border:2px solid rgba(24,57,66,.16);border-radius:20px;background:linear-gradient(145deg,#e2f6fa,#fff);box-shadow:0 14px 30px rgba(24,57,66,.12);padding:18px;min-height:128px;color:var(--deep)}
+    .info-card:nth-child(2n),.choice:nth-child(2n),.mission-card:nth-child(2n){background:linear-gradient(145deg,#e8f8d8,#fff)}
+    .info-card:nth-child(3n),.choice:nth-child(3n),.mission-card:nth-child(3n){background:linear-gradient(145deg,#ffe4d4,#fff)}
+    .info-card strong,.choice strong,.mission-card strong{display:block;font-size:clamp(20px,2.2vw,28px);margin-bottom:8px}
+    .info-card p,.mission-card p{font-size:clamp(16px,1.7vw,20px);margin:0}
+    .choice{cursor:pointer;text-align:left;font-weight:800;display:flex;flex-direction:column;gap:10px;align-items:flex-start;justify-content:space-between;min-height:112px;overflow:hidden}
+    .choice:hover,.choice.is-selected{border-color:var(--sun);transform:translateY(-2px)}
+    .choice.good{border-color:#4f8f5b;background:linear-gradient(145deg,#dff6d8,#fff)}
+    .choice.bad{border-color:#e87845;background:linear-gradient(145deg,#ffe1d2,#fff)}
+    .classify-card{border:2px solid var(--line);border-radius:18px;padding:15px 16px;background:linear-gradient(145deg,#fff7d3,#ffffff);box-shadow:0 14px 26px rgba(24,57,66,.10);margin-bottom:12px}
+    .classify-card strong{display:block;font-size:clamp(19px,1.8vw,25px);margin-bottom:4px}
+    .classify-card p{margin:0 0 10px;font-size:clamp(15px,1.35vw,18px)}
+    .option-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .option-row .choice{min-height:auto;padding:10px 12px;align-items:center;text-align:center;justify-content:center;border-radius:999px;background:#fff}
+    .classify-card.is-done{border-color:#88c46d;background:linear-gradient(145deg,#edf9df,#ffffff)}
+    .picture-card{position:relative;display:block;min-height:285px;padding:0;overflow:hidden;border-radius:22px}
+    .picture-card img{width:100%;height:210px;object-fit:cover;border-radius:18px 18px 0 0;border:0;border-bottom:2px solid var(--line);display:block}
+    .picture-card strong{display:block;padding:14px 18px 0;font-size:clamp(20px,2vw,28px)}
+    .picture-card .tap{margin:10px 18px 16px}
+    .picture-card .image-info{position:absolute;left:14px;right:14px;bottom:78px;background:rgba(24,57,66,.93);color:#fff;border-radius:16px;padding:12px 14px;font-size:clamp(15px,1.45vw,19px);line-height:1.25;box-shadow:0 14px 24px rgba(24,57,66,.22);opacity:0;transform:translateY(12px);transition:.22s ease;pointer-events:none}
+    .picture-card.is-open .image-info{opacity:1;transform:translateY(0)}
+    .owl-wrap{display:flex;align-items:center;gap:16px;margin-top:14px}
+    .owl-wrap img{width:min(190px,38vw);height:auto;max-height:210px;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(24,57,66,.22))}
+    .owl-bubble{border:2px solid var(--line);border-radius:20px;background:#fff;padding:14px 16px;font-weight:900;font-size:clamp(16px,1.6vw,21px);max-width:520px}
+    .nav{display:grid;grid-template-columns:160px 1fr 160px;gap:14px;align-items:center;padding:16px clamp(14px,3vw,26px);background:rgba(255,255,255,.97);border-top:1px solid var(--line)}
+    .nav button{border:0;border-radius:16px;background:var(--deep);color:white;font-weight:900;padding:13px 16px;cursor:pointer;min-height:52px;font-size:18px}
+    .nav button:disabled{opacity:.42;cursor:not-allowed}
+    .progress{text-align:center;font-weight:900;color:var(--deep)}
+    .dots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+    .dot{width:16px;height:16px;border:3px solid var(--deep);border-radius:50%;background:white}
+    .dot.active{background:var(--sun)}
+    .complete{text-align:center;min-height:520px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px}
+    .complete > img{width:min(620px,100%);border-radius:24px;border:2px solid var(--line);box-shadow:var(--shadow)}
+    .complete .owl-wrap{justify-content:center;flex-wrap:wrap}
+    @media(max-width:1120px){
+      .grid-2,.grid-3,.grid-4,.flip-grid,.card-grid{grid-template-columns:1fr}
+      .slide,.stage{min-height:auto}
+      .nav{grid-template-columns:1fr;position:static}
+      .course{text-align:left}
+      .topbar{align-items:flex-start;flex-direction:column}
+      .hero-img,.wide-img{max-height:none}
+      .flip-card{height:auto;min-height:230px}
+      .picture-card img{height:auto}
+      .option-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="logo.png" alt="Escolaris"><span>Ciencias Naturales y Tecnología</span></div>
+    <div class="course">Lección 7 · Lectura interactiva</div>
+  </header>
+  <main class="deck">
+    <section class="stage" aria-label="Lectura interactiva">
+      <article class="slide active">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Observar · comparar · clasificar</div>
+            <h1>Locomoción y estructuras externas</h1>
+            <p>Hoy serás detective de pistas animales. Vas a observar cómo se mueven, qué estructuras tienen y cómo puedes clasificarlos.</p>
+            <div class="owl-wrap"><img src="owlaris-ciencia.png" alt="Owlaris ciencia"><div class="owl-bubble">Mira cada detalle: alas, patas, pico, trompa, hocico y forma de moverse.</div></div>
+          </div>
+          <img class="hero-img" src="01-portada-locomocion-estructuras-externas.png" alt="Investigador observando pistas de animales">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Meta de aprendizaje</div>
+            <h2>¿Qué lograrás al terminar?</h2>
+            <p>Podrás organizar seres vivos por su locomoción, sus alas, sus partes de la boca y su número de patas.</p>
+            <div class="card-grid">
+              <div class="info-card"><strong>Locomoción</strong><p>La forma en que un ser vivo se desplaza.</p></div>
+              <div class="info-card"><strong>Estructuras</strong><p>Partes externas que ayudan a vivir en su ambiente.</p></div>
+              <div class="info-card"><strong>Clasificación</strong><p>Ordenar usando una pista clara.</p></div>
+            </div>
+          </div>
+          <img class="hero-img" src="03-observacion-animales-jardin-escolar.png" alt="Estudiantes observando animales en un jardin escolar">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div>
+          <div class="kicker">Activa tus ideas</div>
+          <h2>Elige una pista para empezar</h2>
+          <p>Toca una tarjeta. Piensa: ¿qué podría explicar la ciencia al observar esa pista?</p>
+          <div class="flip-grid">
+            <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Una huella</strong><span>¿Quién pasó por aquí?</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Pista de movimiento</strong><span>Una huella puede mostrar si un animal camina, salta o se arrastra.</span></span></span></span></button>
+            <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Un ala</strong><span>¿Todas sirven igual?</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Pista de vuelo</strong><span>Las alas pueden tener plumas o membranas. Su forma da informacion.</span></span></span></span></button>
+            <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Una boca</strong><span>¿Cómo se alimenta?</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Pista de alimentación</strong><span>Pico, trompa, boca y hocico pueden indicar formas de comer o explorar.</span></span></span></span></button>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Idea 1</div>
+            <h2>Los seres vivos se desplazan</h2>
+            <p>La locomoción es la manera en que un ser vivo se mueve de un lugar a otro.</p>
+            <div class="flip-grid">
+              <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Nadan</strong><span>Viven o se mueven en el agua.</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Ejemplo</strong><span>Muchos peces usan aletas para avanzar y cambiar de dirección.</span></span></span></span></button>
+              <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Vuelan</strong><span>Se desplazan por el aire.</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Ejemplo</strong><span>Aves, insectos y murciélagos pueden volar, aunque sus alas no sean iguales.</span></span></span></span></button>
+              <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Reptan</strong><span>Avanzan cerca del suelo.</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Ejemplo</strong><span>Una serpiente repta usando músculos y el contacto con el suelo.</span></span></span></span></button>
+            </div>
+          </div>
+          <img class="hero-img" src="02-formas-de-locomocion-animales.png" alt="Animales que nadan vuelan caminan y reptan">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div>
+          <div class="kicker">Reto de clasificación</div>
+          <h2>¿Cómo se mueve?</h2>
+          <p>Elige la locomoción correcta. Puedes volver a intentar si necesitas corregir.</p>
+          <div class="classify-card" data-answer="nada"><strong>Pez</strong><p>Observa su ambiente y sus aletas.</p><div class="option-row"><button class="choice" data-value="nada">Nada</button><button class="choice" data-value="vuela">Vuela</button></div></div>
+          <div class="classify-card" data-answer="vuela"><strong>Ave</strong><p>Tiene alas emplumadas.</p><div class="option-row"><button class="choice" data-value="camina">Camina</button><button class="choice" data-value="vuela">Vuela</button></div></div>
+          <div class="classify-card" data-answer="repta"><strong>Serpiente</strong><p>Se desplaza muy cerca del suelo.</p><div class="option-row"><button class="choice" data-value="repta">Repta</button><button class="choice" data-value="nada">Nada</button></div></div>
+          <div id="moveFeedback" class="feedback warn">Toca una opción en cada caso.</div>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Idea 2</div>
+            <h2>No todas las alas son iguales</h2>
+            <p>Las alas son estructuras externas. Algunas tienen plumas y otras son membranosas.</p>
+            <div class="card-grid">
+              <button class="choice" data-check="wing" data-correct="true"><strong>Alas emplumadas</strong><span>Comunes en muchas aves.</span><em class="tap">Elegir</em></button>
+              <button class="choice" data-check="wing" data-correct="true"><strong>Alas membranosas</strong><span>Presentes en insectos y murciélagos.</span><em class="tap">Elegir</em></button>
+              <button class="choice" data-check="wing" data-correct="false"><strong>Alas de cartón</strong><span>No son una estructura natural del animal.</span><em class="tap">Elegir</em></button>
+            </div>
+            <div id="wingFeedback" class="feedback warn">Toca las opciones que sí describen alas reales de animales.</div>
+          </div>
+          <img class="hero-img" src="04-alas-emplumadas-membranosas.png" alt="Comparacion de alas emplumadas y membranosas">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div>
+          <div class="kicker">Idea 3</div>
+          <h2>La boca también da pistas</h2>
+          <p>La forma de alimentarse o explorar puede relacionarse con pico, trompa, boca u hocico.</p>
+          <img class="wide-img" src="05-bocas-pico-trompa-hocico.png" alt="Animales con pico trompa hocico y boca">
+          <div class="grid-4">
+            <button class="choice" data-reveal="Un pico puede ayudar a tomar semillas, insectos o alimento segun el ave."><strong>Pico</strong><em class="tap">Tocar</em></button>
+            <button class="choice" data-reveal="Una trompa puede funcionar como tubo para tomar nectar u otros alimentos."><strong>Trompa</strong><em class="tap">Tocar</em></button>
+            <button class="choice" data-reveal="Un hocico ayuda a oler, explorar y tomar alimento."><strong>Hocico</strong><em class="tap">Tocar</em></button>
+            <button class="choice" data-reveal="La boca permite tomar alimento; su forma cambia entre seres vivos."><strong>Boca</strong><em class="tap">Tocar</em></button>
+          </div>
+          <div id="mouthFeedback" class="feedback warn">Toca una estructura para descubrir una pista.</div>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Idea 4</div>
+            <h2>El número de patas ayuda a clasificar</h2>
+            <p>También podemos comparar seres vivos por la cantidad de patas. Esta pista no explica todo, pero ayuda mucho.</p>
+            <div class="flip-grid">
+              <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Bípedos</strong><span>Dos patas.</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Ejemplo</strong><span>Muchas aves son bípedas.</span></span></span></span></button>
+              <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Cuadrúpedos</strong><span>Cuatro patas.</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Ejemplo</strong><span>Perros, gatos y caballos son cuadrúpedos.</span></span></span></span></button>
+              <button class="flip-card" type="button"><span class="flip-inner"><span class="face front"><span><strong>Exápodos</strong><span>Seis patas.</span></span><em class="tap">Tocar</em></span><span class="face back"><span><strong>Ejemplo</strong><span>Los insectos tienen seis patas.</span></span></span></span></button>
+            </div>
+          </div>
+          <img class="hero-img" src="06-numero-de-patas-clasificacion.png" alt="Animales clasificados por numero de patas">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div>
+          <div class="kicker">Reto rápido</div>
+          <h2>Relaciona la pista con la clasificación</h2>
+          <p>Toca la mejor opción para completar cada idea.</p>
+          <div class="classify-card" data-answer="exapodo"><strong>Un insecto tiene seis patas.</strong><p>¿Qué palabra lo clasifica por número de patas?</p><div class="option-row"><button class="choice" data-value="exapodo">Exápodo</button><button class="choice" data-value="octopodo">Octópodo</button></div></div>
+          <div class="classify-card" data-answer="pico"><strong>Un ave toma alimento con una estructura dura.</strong><p>¿Qué estructura observas?</p><div class="option-row"><button class="choice" data-value="hocico">Hocico</button><button class="choice" data-value="pico">Pico</button></div></div>
+          <div class="classify-card" data-answer="membranosa"><strong>El ala del murciélago no tiene plumas.</strong><p>¿Qué tipo de ala puede ser?</p><div class="option-row"><button class="choice" data-value="emplumada">Emplumada</button><button class="choice" data-value="membranosa">Membranosa</button></div></div>
+          <div id="clueFeedback" class="feedback warn">Observa cada pista antes de elegir.</div>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Combina pistas</div>
+            <h2>Una sola pista no siempre basta</h2>
+            <p>Un animal puede clasificarse de varias formas al mismo tiempo. Por ejemplo: por cómo se mueve, por sus alas, por su boca y por sus patas.</p>
+            <div class="note">Piensa en un animal: ¿qué pistas observarías primero?</div>
+          </div>
+          <img class="hero-img" src="03-observacion-animales-jardin-escolar.png" alt="Estudiantes comparando pistas de animales">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div>
+          <div class="kicker">Comprueba tu comprensión</div>
+          <h2>Elige la palabra clave</h2>
+          <p>Completa la idea central de la lectura.</p>
+          <div class="soft-panel">
+            <p><strong>Para clasificar seres vivos, observamos pistas como locomoción, alas, boca y número de patas. Así podemos encontrar similitudes y diferencias.</strong></p>
+          </div>
+          <div class="card-grid">
+            <button class="choice" data-final="false"><strong>Solo color</strong><span>El color puede observarse, pero no resume la idea central.</span><em class="tap">Elegir</em></button>
+            <button class="choice" data-final="true"><strong>Clasificación</strong><span>Ordena seres vivos usando pistas claras.</span><em class="tap">Elegir</em></button>
+            <button class="choice" data-final="false"><strong>Adivinanza</strong><span>En ciencia usamos evidencias, no solo adivinanzas.</span><em class="tap">Elegir</em></button>
+          </div>
+          <div id="finalFeedback" class="feedback warn">Toca la palabra que mejor completa la idea.</div>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="grid-2">
+          <div>
+            <div class="kicker">Conclusión</div>
+            <h2>Observar bien ayuda a explicar mejor</h2>
+            <p>La locomoción, las alas, la boca y el número de patas son pistas. Cuando las comparamos, entendemos mejor cómo los seres vivos se relacionan con su ambiente.</p>
+            <div class="note">Reto mental: piensa una frase que conecte un animal con una pista. No tienes que escribirla aquí.</div>
+          </div>
+          <img class="hero-img" src="07-proyecto-rueda-clasificacion.png" alt="Rueda de clasificacion hecha a mano">
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="complete">
+          <div class="kicker">Lectura completada</div>
+          <h2>¡Terminaste la lectura!</h2>
+          <p>Ya tienes pistas para pasar a la Práctica guiada: observa, compara, corrige y vuelve a intentar.</p>
+          <img src="08-cierre-clasificacion-animales.png" alt="Estudiante terminando clasificacion de animales">
+          <div class="owl-wrap"><img src="owlaris-ciencia.png" alt="Owlaris ciencia"><div class="owl-bubble">Buen trabajo. Clasificar es mirar con atención y explicar con evidencia.</div></div>
+        </div>
+      </article>
+    </section>
+    <nav class="nav" aria-label="Navegacion de diapositivas">
+      <button id="prevBtn" type="button">Anterior</button>
+      <div class="progress"><div id="dots" class="dots" aria-hidden="true"></div><div id="counter">Diapositiva 1 de 12</div></div>
+      <button id="nextBtn" type="button">Siguiente</button>
+    </nav>
+  </main>
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const counter = document.getElementById('counter');
+    const dotsBox = document.getElementById('dots');
+    let current = 0;
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'dot';
+      dot.type = 'button';
+      dot.setAttribute('aria-label', `Ir a diapositiva ${i + 1}`);
+      dot.addEventListener('click', () => showSlide(i));
+      dotsBox.appendChild(dot);
+    });
+    const dots = Array.from(document.querySelectorAll('.dot'));
+    function showSlide(index) {
+      current = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
+      counter.textContent = `Diapositiva ${current + 1} de ${slides.length}`;
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === slides.length - 1;
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    prevBtn.addEventListener('click', () => showSlide(current - 1));
+    nextBtn.addEventListener('click', () => showSlide(current + 1));
+    document.querySelectorAll('.flip-card').forEach(card => card.addEventListener('click', () => card.classList.toggle('is-flipped')));
+
+    function checkClassify(card, button, feedbackId) {
+      const answer = card.dataset.answer;
+      card.querySelectorAll('.choice').forEach(choice => choice.classList.remove('good','bad','is-selected'));
+      button.classList.add('is-selected');
+      const ok = button.dataset.value === answer;
+      button.classList.add(ok ? 'good' : 'bad');
+      const feedback = document.getElementById(feedbackId);
+      if (ok) {
+        card.classList.add('is-done');
+        feedback.textContent = '¡Bien! Usaste la pista correcta. Sigue con las demás.';
+        feedback.className = 'feedback good';
+      } else {
+        card.classList.remove('is-done');
+        feedback.textContent = 'Revisa la pista y vuelve a intentar. Corregir también es aprender.';
+        feedback.className = 'feedback warn';
+      }
+      const group = Array.from(card.parentElement.querySelectorAll('.classify-card'));
+      if (group.length && group.every(item => item.classList.contains('is-done'))) {
+        feedback.textContent = '¡Reto completado! Clasificaste usando evidencias.';
+        feedback.className = 'feedback good';
+      }
+    }
+    document.querySelectorAll('.classify-card .choice').forEach(button => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.classify-card');
+        const feedbackId = card.parentElement.querySelector('.feedback')?.id || 'moveFeedback';
+        checkClassify(card, button, feedbackId);
+      });
+    });
+    document.querySelectorAll('[data-check="wing"]').forEach(button => {
+      button.addEventListener('click', () => {
+        button.classList.toggle('is-selected');
+        button.classList.toggle(button.dataset.correct === 'true' ? 'good' : 'bad');
+        const selected = Array.from(document.querySelectorAll('[data-check="wing"].good')).length;
+        const wrong = Array.from(document.querySelectorAll('[data-check="wing"].bad')).length;
+        const feedback = document.getElementById('wingFeedback');
+        if (selected >= 2 && wrong === 0) { feedback.textContent = '¡Correcto! Emplumadas y membranosas son dos pistas reales para comparar alas.'; feedback.className = 'feedback good'; }
+        else if (wrong > 0) { feedback.textContent = 'Casi. Una estructura inventada no sirve para clasificar un animal real.'; feedback.className = 'feedback warn'; }
+        else { feedback.textContent = 'Vas bien. Busca las dos opciones que describen alas reales.'; feedback.className = 'feedback warn'; }
+      });
+    });
+    document.querySelectorAll('[data-reveal]').forEach(button => {
+      button.addEventListener('click', () => {
+        document.getElementById('mouthFeedback').textContent = button.dataset.reveal;
+        document.getElementById('mouthFeedback').className = 'feedback good';
+      });
+    });
+    document.querySelectorAll('[data-final]').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-final]').forEach(item => item.classList.remove('good','bad','is-selected'));
+        const ok = button.dataset.final === 'true';
+        button.classList.add('is-selected', ok ? 'good' : 'bad');
+        const feedback = document.getElementById('finalFeedback');
+        feedback.textContent = ok ? '¡Exacto! Clasificar es ordenar usando pistas claras.' : 'Revisa la idea: buscamos una palabra que explique ordenar con pistas.';
+        feedback.className = ok ? 'feedback good' : 'feedback warn';
+      });
+    });
+    showSlide(0);
+  </script>
+</body>
+</html>
